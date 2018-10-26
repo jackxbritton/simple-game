@@ -7,5 +7,5 @@ set(CMAKE_CXX_FLAGS "-g -Wall")
 set(BIN sdl)
 
 project(${BIN})
-add_executable(${BIN} src/main.cpp)
-target_link_libraries(${BIN} m SDL2)
+add_executable(${BIN} src/main.cpp src/text.cpp src/game.cpp)
+target_link_libraries(${BIN} m SDL2 SDL2_ttf)
