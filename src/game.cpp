@@ -38,6 +38,7 @@ bool game_init(Game *game) {
 		return false;
 	}
 
+	game->position = Vector2(0.0f, 0.0f);
 	return true;
 
 }
@@ -58,4 +59,50 @@ bool game_draw_text(Game *game, const char *str, int x, int y, SDL_Color color) 
 	dst.h = text.height;
 	SDL_RenderCopy(game->renderer, text.texture, NULL, &dst);
 	return true;
+}
+
+bool game_update(Game *game, Input input, int dt) {
+
+	float speed = 32.0f;
+	Vector2 direction(0.0f, 0.0f);
+	direction.y -= input.up    * speed * dt;
+	direction.y += input.down  * speed * dt;
+	direction.x -= input.left  * speed * dt;
+	direction.x += input.right * speed * dt;
+	direction.normalize();
+
+	game->position += direction;
+	game->dt = dt;
+	return true;
+}
+
+bool game_render(Game *game) {
+
+	// Clear.
+	SDL_SetRenderDrawColor(game->renderer, 0x00, 0x00, 0x00, 0xff);
+	SDL_RenderClear(game->renderer);
+
+	// Dynamic text.
+	SDL_Color white;
+	white.r = 0xff;
+	white.g = 0xff;
+	white.b = 0xff;
+	white.a = 0xff;
+	if (!game_draw_text(game, "i", game->position.x, game->position.y, white)) return false;
+
+	// More dynamic text.
+	SDL_Color blue;
+	blue.r = 0x88;
+	blue.g = 0x88;
+	blue.b = 0xff;
+	blue.a = 0xff;
+	char buf[32];
+	snprintf(buf, sizeof(buf), "fps=%f", 1000.0f / game->dt);
+	if (!game_draw_text(game, buf, 32, 32, blue)) return false;
+	snprintf(buf, sizeof(buf), "dt=%d", game->dt);
+	if (!game_draw_text(game, buf, 32, 72+32, blue)) return false;
+
+	SDL_RenderPresent(game->renderer);
+	return true;
+
 }

@@ -64,14 +64,11 @@ bool do_stuff(Game *game) {
 
 	bool success = true;
 
-	// Initialize static text.
-	SDL_Color white;
-	white.r = 0xff;
-	white.g = 0xff;
-	white.b = 0xff;
-	white.a = 0xff;
-	Text text;
-	if (!text_init(&text, game->renderer, game->font, "whatever", white)) return false;
+	Input input;
+	input.up    = false;
+	input.down  = false;
+	input.left  = false;
+	input.right = false;
 
 	int ticks_last = SDL_GetTicks();
 
@@ -83,58 +80,35 @@ bool do_stuff(Game *game) {
 			case SDL_QUIT:
 				stop = 1;
 				break;
-			}
-		}
-
-		int ticks_now = SDL_GetTicks();
-		int ticks_diff = ticks_now - ticks_last;
-		ticks_last = ticks_now;
-
-		// Render.
-		SDL_SetRenderDrawColor(game->renderer, 127, 127, 255, 255);
-		SDL_RenderClear(game->renderer);
-
-		int margin_left = 144,
-			margin_top  = 144;
-
-		SDL_Rect dst;
-		dst.x = margin_left;
-		dst.y = margin_top;
-		dst.w = text.width;
-		dst.h = text.height;
-		SDL_SetTextureColorMod(text.texture, 255, 127, 127);
-		SDL_RenderCopy(game->renderer, text.texture, NULL, &dst);
-
-
-		// Dynamic text.
-		char buf[8];
-		snprintf(buf, sizeof(buf), "fps: %f", 1000.0f / ticks_diff);
-		if (!game_draw_text(game, buf, margin_left, margin_top + text.height, white)) {
-			success = false;
-			break;
-		}
-
-		// Again!
-		snprintf(buf, sizeof(buf), "%d", ticks_now);
-		if (!game_draw_text(game, buf, margin_left, margin_top + 2*text.height, white)) {
-			success = false;
-			break;
-		}
-
-		// 100x.
-		for (int i = 0; i < 100; i++) {
-			snprintf(buf, sizeof(buf), "you, %i, know the drill", i);
-			if (!game_draw_text(game, buf, margin_left + 32*i, margin_top + 3*text.height, white)) {
-				success = false;
+			case SDL_KEYDOWN:
+			case SDL_KEYUP:
+				switch (event.key.keysym.sym) {
+				case SDLK_k:
+					input.up = event.type == SDL_KEYDOWN;
+					break;
+				case SDLK_j:
+					input.down = event.type == SDL_KEYDOWN;
+					break;
+				case SDLK_h:
+					input.left = event.type == SDL_KEYDOWN;
+					break;
+				case SDLK_l:
+					input.right = event.type == SDL_KEYDOWN;
+					break;
+				}
 				break;
 			}
 		}
 
-		SDL_RenderPresent(game->renderer);
+		int ticks_now = SDL_GetTicks();
+		int dt = ticks_now - ticks_last;
+		ticks_last = ticks_now;
+
+		if (!game_update(game, input, dt)) return false;
+		if (!game_render(game)) return false;
 
 	}
 
-	text_deinit(&text);
 	return success;
 
 }
